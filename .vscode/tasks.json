@@ -1,0 +1,15 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run Pylint in Docker",
+            "type": "shell",
+            "command": "docker exec -i <your-container-name> pylint ${file}",
+            "problemMatcher": ["$pylint"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
