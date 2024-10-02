@@ -15,13 +15,11 @@ from requests.exceptions import HTTPError, Timeout
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-client = OpenAI()
-
 # Load the model name from the environment variables
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 MODEL = os.getenv("OPENAI_CHAT_MODEL")
 
-# Configure timeout
-DEFAULT_TIMEOUT = 10  # seconds
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 if not MODEL:
     logger.error("OPENAI_CHAT_MODEL environment variable is not set.")
@@ -50,14 +48,13 @@ def get_openai_response(message: str) -> str:
     try:
         logger.info("Sending request to OpenAI...")
         # Call OpenAI API for the response
-        response = client.ChatCompletion.create(
+        response = client.chat.completions.create(
             model= MODEL,
             temperature= 0,
-            messages= messages,
-            request_timeout= DEFAULT_TIMEOUT
+            messages= messages
         )
         logger.info("OpenAI response received successfully.")
-        return response.choices[0].message["content"]
+        return response.choices[0].message.content
 
     except Timeout as e:
         # Log timeout-specific errors and retry
@@ -68,7 +65,7 @@ def get_openai_response(message: str) -> str:
         # Log HTTP-specific errors and explicitly re-raise the exception
         logger.error("HTTP error occurred during OpenAI API request: %s", e)
         raise RuntimeError(f"Failed to fetch response due to HTTP error: {e}") from e
-    
+
     except Exception as e:
         # Log any unexpected exceptions and explicitly re-raise
         logger.error("An unexpected error occurred: %s", e)

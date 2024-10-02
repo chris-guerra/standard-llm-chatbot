@@ -10,8 +10,8 @@ COPY requirements.txt .
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the src directory to the working directory
-COPY src/ /app/src/
+# Copy the rest of the project
+COPY . .
 
 # Expose ports for both FastAPI and Streamlit
 EXPOSE 8000 8501
