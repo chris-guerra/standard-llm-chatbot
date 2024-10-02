@@ -8,6 +8,8 @@ services:
       - .env
     ports:
       - "8000:8000"
+    volumes:
+      - .:/app  # Mount the entire project to the container
   frontend:
     build: .
     container_name: chatbot_frontend
@@ -15,3 +17,5 @@ services:
       - "8501:8501"
     depends_on:
       - backend
+    volumes:
+      - .:/app  # Mount the entire project to the container
