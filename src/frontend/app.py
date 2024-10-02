@@ -18,46 +18,37 @@ Components:
 - FastAPI for the backend API.
 - OpenAI API for chatbot responses.
 """
+import os
+from openai import OpenAI
 import streamlit as st
-import requests
 
-# Set the title of the app
-st.title("Chatbot with FastAPI and OpenAI")
+st.title("ChatGPT-like clone")
 
-# Create a form to allow submitting with both the "Send" button and the "Enter" key
-with st.form(key="chat_form"):
-    # Get user input with a default placeholder
-    user_input = st.text_input("You: ", placeholder="Type your message here...")
+client = OpenAI(api_key="")
 
-    # Button to send the user input to the backend API
-    submit_button = st.form_submit_button(label="Send")
+if "openai_model" not in st.session_state:
+    st.session_state["openai_model"] = "gpt-3.5-turbo"
 
-# Only proceed after the form is submitted (either by clicking the button or pressing Enter)
-if submit_button:
-    if user_input.strip():  # Ensure input isn't just whitespace
-        try:
-            # Display a spinner while waiting for the response
-            with st.spinner("Waiting for response..."):
-                # Make a POST request to the backend with a timeout
-                response = requests.post(
-                    "http://backend:8000/chat/", 
-                    json={"message": user_input}, 
-                    timeout=10
-                    )
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-            # Handle the response
-            if response.status_code == 200:
-                st.write("Bot: " + response.json().get("response", "No response received"))
-            else:
-                st.error(f"Error {response.status_code}: {response.text}")
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-        except requests.exceptions.Timeout:
-            # Handle timeout specifically
-            st.error("The request timed out. Please try again later.")
+if prompt := st.chat_input("What is up?"):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-        except requests.exceptions.RequestException as e:
-            # Handle any request-related errors, such as network issues
-            st.error(f"An error occurred while connecting to the backend: {e}")
-    else:
-        # Only display the warning if the user has submitted an empty message
-        st.warning("Please enter a message before sending.")
+    with st.chat_message("assistant"):
+        stream = client.chat.completions.create(
+            model=st.session_state["openai_model"],
+            messages=[
+                {"role": m["role"], "content": m["content"]}
+                for m in st.session_state.messages
+            ],
+            stream=True,
+        )
+        response = st.write_stream(stream)
+    st.session_state.messages.append({"role": "assistant", "content": response})

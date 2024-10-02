@@ -9,7 +9,7 @@ for validation, HTTP exceptions, and other server-side issues.
 
 import logging
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 from src.services.openai_service import get_openai_response
 
 # Set up logging
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 # Pydantic model for the input
-class Message(BaseModel):
+class ChatRequest(BaseModel):
     """
     Message model for the request body.
 
@@ -28,9 +28,10 @@ class Message(BaseModel):
         message (str): The input message provided by the user to be sent to the OpenAI API.
     """
     message: str
+    history: list = []
 
 @app.post("/chat/")
-async def chat(message: Message):
+async def chat(request: ChatRequest):
     """
     Handles POST requests to the /chat/ endpoint. Accepts a message from the user
     and returns a response from the OpenAI model.
@@ -39,27 +40,16 @@ async def chat(message: Message):
     :return: JSON response with the AI's response.
     """
     try:
-        # Log the incoming request
-        logger.info("Received message: %s", message.message)
+        logger.info(f"Received message: {request.message}")
 
-        # Get the OpenAI response
-        response = get_openai_response(message.message)
+        # Pass the user's message and chat history to OpenAI
+        response, updated_history = get_openai_response(request.message, request.history)
 
-        # Log the successful response
+        logger.info("History: %s", updated_history)
         logger.info("OpenAI response: %s", response)
-
-        return {"response": response}
-    except ValidationError as e:
-        # Log validation errors (e.g., malformed request body)
-        logger.error("Validation error: %s", e)
-        raise HTTPException(status_code=422, detail="Invalid input format.") from e
-
-    except HTTPException as e:
-        # Log HTTP-specific errors
-        logger.error("HTTP exception occurred: %s", e)
-        raise e  # Re-raise HTTP exceptions directly
+        return {"response": response, "history": updated_history}
 
     except Exception as e:
-        # Log generic server errors
-        logger.error("An error occurred while processing the request: %s", e)
-        raise HTTPException(status_code=500, detail="Internal server error.") from e
+        logger.error(f"Error processing the request: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error.")
+
