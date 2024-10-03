@@ -27,8 +27,7 @@ class ChatRequest(BaseModel):
     Attributes:
         message (str): The input message provided by the user to be sent to the OpenAI API.
     """
-    message: str
-    history: list = []
+    messages: list = []
 
 @app.post("/chat/")
 async def chat(request: ChatRequest):
@@ -40,14 +39,13 @@ async def chat(request: ChatRequest):
     :return: JSON response with the AI's response.
     """
     try:
-        logger.info(f"Received message: {request.message}")
+        logger.info(f"Received message: {request.messages}")
 
         # Pass the user's message and chat history to OpenAI
-        response, updated_history = get_openai_response(request.message, request.history)
+        response = get_openai_response(request.messages)
 
-        logger.info("History: %s", updated_history)
         logger.info("OpenAI response: %s", response)
-        return {"response": response, "history": updated_history}
+        return {"messages": response}
 
     except Exception as e:
         logger.error(f"Error processing the request: {e}")
