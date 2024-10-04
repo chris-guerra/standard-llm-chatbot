@@ -22,17 +22,27 @@ import streamlit as st
 import requests
 import json
 
-# Set the title of the app
-st.title("Chatbot with FastAPI and OpenAI")
+# App title
+st.set_page_config(page_title="Custom LLM Chatbot")
+
+# Sidebar
+with st.sidebar:
+    st.title('Custom LLM Chatbot')
+    st.subheader('Models and parameters')
+    st.markdown('📖 Learn how to build this app in this [blog](https://blog.streamlit.io/how-to-build-a-llama-2-chatbot/)!')
+
+# Main View
 
 # Initialize session state for storing chat history and model
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+if "messages" not in st.session_state.keys():
+    st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
 
 # Display the chat history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
+
+        
 
 if prompt := st.chat_input("What is up?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
