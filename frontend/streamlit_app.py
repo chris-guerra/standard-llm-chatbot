@@ -60,12 +60,19 @@ if prompt := st.chat_input("Write your response here."):
 
     with st.chat_message("assistant"):
         stream = requests.post("http://backend:8000/live-chat", 
-                               json=payload,
-                               timeout= 10)
-        stream.raise_for_status()
+                       json=payload,
+                       stream=True,  # Important to set stream=True
+                       timeout=10)
 
-    response = st.write_stream(stream)
-    st.session_state.messages.append({"role": "assistant", "content": response})
+        if stream.status_code == 200:
+            for chunk in stream.iter_content(chunk_size=None):
+                if chunk:
+                    st.session_state.messages.append({"role": "assistant", "content": chunk.decode('utf-8')})
+                    st.markdown(chunk.decode('utf-8'))
+        else:
+            st.error("Error occurred while getting response from server.")
+
+
 
 
 

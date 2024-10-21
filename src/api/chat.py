@@ -52,11 +52,10 @@ async def stream_openai_response(messages: List[Message]):
         
         # Pass the formatted messages to the OpenAI API
         response = service.get_chat_stream(messages=formatted_messages)
-
-        # Stream the response chunks back to the client
-        for chunk in response:
-            if chunk.choices[0].delta.content:
-                yield chunk.choices[0].delta.content
+        
+        # Stream the response chunks
+        async for chunk in response:
+            yield chunk.decode("utf-8")  # Ensure content is properly decoded to string
 
     except Exception as e:
         logger.error(f"error_streaming_response: {e}")
