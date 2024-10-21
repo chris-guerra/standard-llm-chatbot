@@ -24,40 +24,51 @@ import requests
 # Set the title of the app
 st.title("Chatbot with FastAPI and OpenAI")
 
+# Initialize session state to store conversation history if it doesn't exist
+if "history" not in st.session_state:
+    st.session_state.history = []
+
+# Display chat history
+if st.session_state.history:
+    for chat in st.session_state.history:
+        if chat["role"] == "user":
+            st.write(f"You: {chat['content']}")
+        elif chat["role"] == "assistant":
+            st.write(f"Bot: {chat['content']}")
+
 # Create a form to allow submitting with both the "Send" button and the "Enter" key
 with st.form(key="chat_form"):
-    # Get user input with a default placeholder
     user_input = st.text_input("You: ", placeholder="Type your message here...")
-
-    # Button to send the user input to the backend API
     submit_button = st.form_submit_button(label="Send")
 
-# Only proceed after the form is submitted (either by clicking the button or pressing Enter)
 if submit_button:
-    if user_input.strip():  # Ensure input isn't just whitespace
+    if user_input.strip():
         try:
-            # Display a spinner while waiting for the response
+            # Make a POST request to the backend with the user's message and the conversation history
             with st.spinner("Waiting for response..."):
-                # Make a POST request to the backend with a timeout
                 response = requests.post(
-                    "http://backend:8000/chat/", 
-                    json={"message": user_input}, 
+                    "http://backend:8000/chat/",
+                    json={"message": user_input, "history": st.session_state.history},
                     timeout=10
-                    )
+                )
 
-            # Handle the response
             if response.status_code == 200:
-                st.write("Bot: " + response.json().get("response", "No response received"))
+                data = response.json()
+
+                # Update the session state with the new history
+                st.session_state.history = data.get("history", [])
+
+                # Refresh the page to show updated history
+                st.rerun()
+
             else:
                 st.error(f"Error {response.status_code}: {response.text}")
 
         except requests.exceptions.Timeout:
-            # Handle timeout specifically
             st.error("The request timed out. Please try again later.")
 
         except requests.exceptions.RequestException as e:
-            # Handle any request-related errors, such as network issues
             st.error(f"An error occurred while connecting to the backend: {e}")
+
     else:
-        # Only display the warning if the user has submitted an empty message
         st.warning("Please enter a message before sending.")
