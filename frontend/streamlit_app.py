@@ -31,7 +31,9 @@ with st.sidebar:
     st.subheader('Models and parameters')
     st.markdown('📖 Learn how to build this app in this [blog](https://blog.streamlit.io/how-to-build-a-llama-2-chatbot/)!')
 
+#---------------------
 # Main View
+#---------------------
 
 # Initialize session state for storing chat history and model
 if "messages" not in st.session_state.keys():
@@ -40,7 +42,7 @@ if "messages" not in st.session_state.keys():
 # Display the chat history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+        st.write(message["content"])
 
         
 
