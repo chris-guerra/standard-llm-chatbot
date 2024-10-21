@@ -36,7 +36,7 @@ with st.sidebar:
 #---------------------
 
 # Initialize session state for storing chat history and model
-if "messages" not in st.session_state.keys():
+if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": "How may I assist you today?"}]
 
 # Display the chat history
@@ -44,10 +44,10 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.write(message["content"])
 
-        
-
-if prompt := st.chat_input("What is up?"):
+# Accept user input
+if prompt := st.chat_input("Write your response here."):
     st.session_state.messages.append({"role": "user", "content": prompt})
+    # Display user message in chat message container
     with st.chat_message("user"):
         st.markdown(prompt)
     

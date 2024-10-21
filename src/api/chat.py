@@ -48,15 +48,15 @@ async def stream_openai_response(messages: List[Message]):
         service = get_ai_service("openai")
 
         # Convert Pydantic models into the correct dictionary format for OpenAI
-        formatted_messages = [{"role": message.role, "content": message.content} for message in messages]
+        formatted_messages = [{"role": message["role"], "content": message["content"]} for message in messages]
         
         # Pass the formatted messages to the OpenAI API
         response = service.get_chat_stream(messages=formatted_messages)
 
         # Stream the response chunks back to the client
         for chunk in response:
-            if chunk:
-                yield chunk
+            if chunk.choices[0].delta.content:
+                yield chunk.choices[0].delta.content
 
     except Exception as e:
         logger.error(f"error_streaming_response: {e}")
